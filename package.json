@@ -10,7 +10,6 @@
 
 	"dependencies":
 	{
-		"com.helvest.servicelocator": "https://github.com/Helvest/ServiceLocator.git"
 	},
 
 	"keywords":
