@@ -15,7 +15,7 @@ public static class SL
 	private static readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
 
 #if UNITY_EDITOR
-private static bool useDebugLog = false;
+	private static bool useDebugLog = false;
 #endif
 
 	#endregion
@@ -25,7 +25,7 @@ private static bool useDebugLog = false;
 	private static void _Add<T>(T instance) where T : class
 	{
 #if UNITY_EDITOR
-	DebugLog("_Add: add", instance);
+		DebugLog("_Add: add", instance);
 #endif
 
 		_singletons.Add(instance.GetType(), instance);
@@ -44,14 +44,14 @@ private static bool useDebugLog = false;
 		if (!_singletons.ContainsKey(type))
 		{
 #if UNITY_EDITOR
-		DebugLog("Add: add", instance);
+			DebugLog("Add: add", instance);
 #endif
 
 			_singletons.Add(type, instance);
 		}
 
 #if UNITY_EDITOR
-	DebugLog("Add: don't add", instance);
+		DebugLog("Add: don't add", instance);
 #endif
 
 		return _singletons.ContainsValue(instance);
@@ -70,7 +70,7 @@ private static bool useDebugLog = false;
 		if (!_singletons.ContainsKey(type))
 		{
 #if UNITY_EDITOR
-		DebugLog("AddOrDestroy: add", instance);
+			DebugLog("AddOrDestroy: add", instance);
 #endif
 
 			_singletons.Add(type, instance);
@@ -78,7 +78,7 @@ private static bool useDebugLog = false;
 		else if (!_singletons.ContainsValue(instance))
 		{
 #if UNITY_EDITOR
-		DebugLog("AddOrDestroy: destroy", instance);
+			DebugLog("AddOrDestroy: destroy", instance);
 #endif
 
 			Object.Destroy(instance.gameObject);
@@ -273,29 +273,29 @@ private static bool useDebugLog = false;
 
 #if UNITY_EDITOR
 
-private static void DebugLog<T>(string text, T instance)
-{
-	if (!useDebugLog)
+	private static void DebugLog<T>(string text, T instance)
 	{
-		return;
-	}
+		if (!useDebugLog)
+		{
+			return;
+		}
 
-	var targetType = typeof(T);
-	var trueType = instance.GetType();
+		var targetType = typeof(T);
+		var trueType = instance.GetType();
 
-	if (targetType.IsInterface)
-	{
-		Debug.Log($"{text} '{trueType}' of interface '{targetType}'");
+		if (targetType.IsInterface)
+		{
+			Debug.Log($"{text} '{trueType}' of interface '{targetType}'");
+		}
+		else if (targetType.IsClass)
+		{
+			Debug.Log($"{text} '{trueType}' of class '{targetType}'");
+		}
+		else
+		{
+			Debug.LogWarning($"{text} '{trueType}' of '{targetType}' who is not class or interface");
+		}
 	}
-	else if (targetType.IsClass)
-	{
-		Debug.Log($"{text} '{trueType}' of class '{targetType}'");
-	}
-	else
-	{
-		Debug.LogWarning($"{text} '{trueType}' of '{targetType}' who is not class or interface");
-	}
-}
 
 #endif
 

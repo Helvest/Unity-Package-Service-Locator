@@ -1,31 +1,16 @@
 {
-
-	"name": "com.helvest.servicelocator",
-
-	"version": "1.0.0",
-
-	"displayName": "Service Locator",
-
-	"description": "Service Locator for Components and Interfaces",
-
-	"dependencies":
-	{
-	},
-
-	"keywords":
-	[
-		"Service",
-
-		"Locator",
-
-		"Singleton"
-	],
-
-	"author":
-	{
-		"name": "Pedro Dominicé (Helvest)",
-
-		"url": "https://twitter.com/HelvestEpic"
-	}
-	
+  "name": "com.helvest.servicelocator",
+  "version": "1.0.0",
+  "displayName": "Service Locator",
+  "description": "Service Locator for Components and Interfaces",
+  "keywords": [
+    "Service",
+    "Locator",
+    "Singleton"
+  ],
+  "author": {
+    "name": "Pedro Dominic\u00e9 (Helvest)",
+    "url": "https://twitter.com/HelvestEpic"
+  },
+  "type": "tool"
 }
