@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 /// <summary>
@@ -14,6 +15,8 @@ public static class SL
 
 	private static readonly Dictionary<Type, object> _singletons = new Dictionary<Type, object>();
 
+	private static readonly Dictionary<Type, Delegate> _dictOfEventAdded = new Dictionary<Type, Delegate>();
+
 #if UNITY_EDITOR
 	private static bool useDebugLog = false;
 #endif
@@ -22,13 +25,20 @@ public static class SL
 
 	#region Add
 
-	private static void _Add<T>(T instance) where T : class
+	private static void _Add<T>(Type type, T instance) where T : class
 	{
-#if UNITY_EDITOR
-		DebugLog("_Add: add", instance);
-#endif
+		_singletons.Add(type, instance);
 
-		_singletons.Add(instance.GetType(), instance);
+		if (_dictOfEventAdded.TryGetValue(type, out var value))
+		{
+			var action = (Action<T>)value;
+
+			action?.Invoke(instance);
+
+			action = null;
+
+			_dictOfEventAdded.Remove(type);
+		}
 	}
 
 	/// <summary>
@@ -46,8 +56,7 @@ public static class SL
 #if UNITY_EDITOR
 			DebugLog("Add: add", instance);
 #endif
-
-			_singletons.Add(type, instance);
+			_Add(type, instance);
 		}
 
 #if UNITY_EDITOR
@@ -65,15 +74,14 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool AddOrDestroy<T>(T instance) where T : Component
 	{
-		Type type = instance.GetType();
+		Type type = typeof(T);
 
 		if (!_singletons.ContainsKey(type))
 		{
 #if UNITY_EDITOR
 			DebugLog("AddOrDestroy: add", instance);
 #endif
-
-			_singletons.Add(type, instance);
+			_Add(type, instance);
 		}
 		else if (!_singletons.ContainsValue(instance))
 		{
@@ -101,7 +109,20 @@ public static class SL
 	/// <returns>Return true if the instance was in the dictionary</returns>
 	public static bool Remove<T>(T instance) where T : Component
 	{
-		return _singletons.ContainsValue(instance) ? _singletons.Remove(instance.GetType()) : false;
+		if (_singletons.ContainsValue(instance))
+		{
+			var type = typeof(T);
+
+			_singletons.Remove(type);
+
+			_dictOfEventAdded.Remove(type);
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	/// <summary>
@@ -121,13 +142,14 @@ public static class SL
 	#region Get
 
 	/// <summary>
-	/// Get component instance of type T from the singleton dictionnary
+	/// Get a instance of type T from the singleton dictionnary
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return instance or default</returns>
-	public static T Get<T>() where T : class
+	public static T Get<T>(Action<T> callback = null) where T : class
 	{
-		Get(out T instance);
+		TryGet(out T instance, callback);
 
 		return instance;
 	}
@@ -136,9 +158,10 @@ public static class SL
 	/// Get component instance of type T from the singleton dictionnary
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
-	/// /// <param name="instance">Component instance</param>
+	/// <param name="instance">Component instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
-	public static bool Get<T>(out T instance) where T : class
+	public static bool TryGet<T>(out T instance, Action<T> callback = null) where T : class
 	{
 		Type type = typeof(T);
 
@@ -152,6 +175,22 @@ public static class SL
 			}
 		}
 
+		if (callback != null)
+		{
+			if (_dictOfEventAdded.TryGetValue(type, out var value))
+			{
+				var action = (Action<T>)value;
+
+				action += callback;
+			}
+			else
+			{
+				var action = new Action<T>(callback);
+
+				_dictOfEventAdded.Add(type, action);
+			}
+		}
+
 		instance = default;
 
 		return false;
@@ -162,10 +201,11 @@ public static class SL
 	/// Get a component instance of type T in the singleton dictionnary or find it first instance in the scene
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return instance or default</returns>
-	public static T GetOrFindC<T>() where T : Component
+	public static T GetOrFindComponent<T>(Action<T> callback = null) where T : Component
 	{
-		GetOrFindC(out T instance);
+		TryGetOrFindComponent(out T instance, callback);
 
 		return instance;
 	}
@@ -174,10 +214,11 @@ public static class SL
 	/// Get a component instance of interface type T in the singleton dictionnary or find it first instance in the scene
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return instance or default</returns>
-	public static T GetOrFindI<T>() where T : class
+	public static T GetOrFindInterface<T>(Action<T> callback = null) where T : class
 	{
-		GetOrFindI(out T instance);
+		TryGetOrFindInterface(out T instance, callback);
 
 		return instance;
 	}
@@ -187,22 +228,24 @@ public static class SL
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
 	/// <param name="instance">Component instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
-	public static bool GetOrFindC<T>(out T instance) where T : Component
+	public static bool TryGetOrFindComponent<T>(out T instance, Action<T> callback = null) where T : Component
 	{
-		if (Get(out instance))
+		if (TryGet(out instance, callback))
 		{
 			return true;
 		}
 
 		instance = Object.FindObjectOfType<T>();
 
-		if (instance)
+		if (instance != null)
 		{
-			_Add(instance);
+			_Add(typeof(T), instance);
+			return true;
 		}
 
-		return instance;
+		return false;
 	}
 
 	/// <summary>
@@ -210,20 +253,21 @@ public static class SL
 	/// </summary>
 	/// <typeparam name="T">Component class or interface</typeparam>
 	/// <param name="instance">Component instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
-	public static bool GetOrFindI<T>(out T instance) where T : class
+	public static bool TryGetOrFindInterface<T>(out T instance, Action<T> callback = null) where T : class
 	{
-		Type typeT = typeof(T);
+		Type type = typeof(T);
 
-		if (!typeT.IsInterface)
+		if (!type.IsInterface)
 		{
-			Debug.LogError("Type no a interface");
+			Debug.LogError($"Type {type} is no a interface");
 
 			instance = null;
 			return false;
 		}
 
-		if (Get(out instance))
+		if (TryGet(out instance, callback))
 		{
 			return true;
 		}
@@ -232,7 +276,7 @@ public static class SL
 
 		if (instance != null)
 		{
-			_Add(instance);
+			_Add(type, instance);
 			return true;
 		}
 
@@ -249,6 +293,7 @@ public static class SL
 	public static void Reset()
 	{
 		_singletons.Clear();
+		_dictOfEventAdded.Clear();
 	}
 
 	/// <summary>
@@ -265,6 +310,7 @@ public static class SL
 		}
 
 		_singletons.Clear();
+		_dictOfEventAdded.Clear();
 	}
 
 	#endregion Reset
