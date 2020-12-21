@@ -110,6 +110,14 @@ public static class SL
 
 			return true;
 		}
+		else if (_singletonsDict.ContainsValue(instance))
+		{
+#if UNITY_EDITOR
+			DebugLog("AddOrDestroy: already in, don't destroy", instance);
+#endif
+
+			return true;
+		}
 		else
 		{
 #if UNITY_EDITOR
