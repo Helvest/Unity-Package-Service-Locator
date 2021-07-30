@@ -20,13 +20,11 @@ public static class SL
 
 	#region Add
 
-	private static void _Add<T>(T instance) where T : class
+	private static void _Add<T>(Type type, T instance) where T : class
 	{
-		Type type = typeof(T);
-
 		_singletonsDict.Add(type, instance);
 
-		_InvokeCallbacks(instance);
+		_InvokeCallbacks(type, instance);
 	}
 
 	/// <summary>
@@ -37,21 +35,29 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool Add<T>(T instance) where T : MonoBehaviour
 	{
-		Type type = instance.GetType();
+		var type = typeof(T);
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
 #if UNITY_EDITOR
 			DebugLog("Add: add", instance);
 #endif
-			_Add(instance);
+			_Add(type, instance);
 
 			return true;
 		}
 		else
 		{
 #if UNITY_EDITOR
-			DebugLog("Add: don't add", instance);
+
+			if (_singletonsDict.ContainsValue(instance))
+			{
+				DebugLog("Add: don't add, same instance already in", instance);
+			}
+			else
+			{
+				DebugLog("Add: don't add, same type already in", instance);
+			}
 #endif
 
 			return _singletonsDict.ContainsValue(instance);
@@ -66,7 +72,7 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool AddOrReplace<T>(T instance) where T : MonoBehaviour
 	{
-		Type type = instance.GetType();
+		var type = typeof(T);
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
@@ -74,7 +80,7 @@ public static class SL
 			DebugLog("AddOrReplace: add", instance);
 #endif
 
-			_Add(instance);
+			_Add(type, instance);
 
 			return true;
 		}
@@ -99,14 +105,14 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool AddOrDestroy<T>(T instance) where T : MonoBehaviour
 	{
-		Type type = instance.GetType();
+		var type = typeof(T);
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
 #if UNITY_EDITOR
 			DebugLog("AddOrDestroy: add", instance);
 #endif
-			_Add(instance);
+			_Add(type, instance);
 
 			return true;
 		}
@@ -142,9 +148,9 @@ public static class SL
 	/// <returns>Return true if the type was in the dictionary</returns>
 	public static bool Remove<T>() where T : class
 	{
-		Type type = typeof(T);
+		var type = typeof(T);
 
-		if (!_singletonsDict.ContainsKey(type))
+		if (!_singletonsDict.TryGetValue(type, out object instance))
 		{
 			return false;
 		}
@@ -157,16 +163,22 @@ public static class SL
 
 		var typeToRemove = new List<Type>();
 
-		foreach (KeyValuePair<Type, object> pair in _singletonsDict)
+		foreach (var pair in _singletonsDict)
 		{
-			//Test is key Is Assignable From T
-			if (pair.Key.IsAssignableFrom(type) || type.IsAssignableFrom(pair.Key))
+			//Remove only instance copy
+			if (pair.Value == instance)
 			{
 				typeToRemove.Add(pair.Key);
 			}
+
+			//Test is key Is Assignable From T
+			/*if (pair.Key.IsAssignableFrom(type) || type.IsAssignableFrom(pair.Key))
+			{
+				typeToRemove.Add(pair.Key);
+			}*/
 		}
 
-		foreach (Type key in typeToRemove)
+		foreach (var key in typeToRemove)
 		{
 #if UNITY_EDITOR
 			DebugLog("Remove: ", key, type);
@@ -191,29 +203,30 @@ public static class SL
 			return false;
 		}
 
-#if UNITY_EDITOR
-		DebugLog("Remove: ", instance);
-#endif
-
-		Type type = instance.GetType();
-
-		_singletonsDict.Remove(type);
-
 		var typeToRemove = new List<Type>();
 
-		foreach (KeyValuePair<Type, object> pair in _singletonsDict)
+		foreach (var pair in _singletonsDict)
 		{
+			if (pair.Value == instance)
+			{
+				typeToRemove.Add(pair.Key);
+			}
+
 			//Test is key Is Assignable From T
-			if (pair.Key.IsAssignableFrom(type))
+			/*if (pair.Key.IsAssignableFrom(type))
 			{
 				if (instance.Equals(pair.Value))
 				{
 					typeToRemove.Add(pair.Key);
 				}
-			}
+			}*/
 		}
 
-		foreach (Type key in typeToRemove)
+#if UNITY_EDITOR
+		var type = instance.GetType();
+#endif
+
+		foreach (var key in typeToRemove)
 		{
 #if UNITY_EDITOR
 			DebugLog("Remove: ", key, type);
@@ -241,25 +254,24 @@ public static class SL
 
 	#region Get
 
-	private static bool _TryGet<T>(out T instance) where T : class
+	private static bool _TryGet<T>(Type type, out T instance) where T : class
 	{
-		Type type = typeof(T);
-
-		//Research: Quick
+		//Search: Quick
 		if (_singletonsDict.TryGetValue(type, out object singleton))
 		{
 			instance = (T)singleton;
 			return true;
 		}
 
-		//Deeper research: Slow
-		foreach (KeyValuePair<Type, object> pair in _singletonsDict)
+		//Deeper search: Slow
+		foreach (var pair in _singletonsDict)
 		{
 			//Test is key Is Assignable From T
 			if (type.IsAssignableFrom(pair.Key))
 			{
 				instance = (T)pair.Value;
 
+				//Save type for quick search
 				_singletonsDict.Add(type, instance);
 
 				return true;
@@ -280,7 +292,9 @@ public static class SL
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
 	public static bool TryGet<T>(out T instance, Action<T> callback = null) where T : class
 	{
-		if (_TryGet(out instance))
+		var type = typeof(T);
+
+		if (_TryGet(type, out instance))
 		{
 #if UNITY_EDITOR
 			DebugLog("TryGet: get", instance);
@@ -291,7 +305,7 @@ public static class SL
 		}
 		else
 		{
-			_AddCallback(callback);
+			_AddCallback(type, callback);
 
 			return false;
 		}
@@ -305,7 +319,7 @@ public static class SL
 	/// <returns>Return instance or default</returns>
 	public static T Get<T>(Action<T> callback = null) where T : class
 	{
-		TryGet(out T instance, callback);
+		TryGet(out var instance, callback);
 
 		return instance;
 	}
@@ -318,7 +332,7 @@ public static class SL
 	/// <returns>Return instance or default</returns>
 	public static T GetOrFindComponent<T>(Action<T> callback = null) where T : MonoBehaviour
 	{
-		TryGetOrFindComponent(out T instance, callback);
+		TryGetOrFindComponent(out var instance, callback);
 
 		return instance;
 	}
@@ -331,7 +345,7 @@ public static class SL
 	/// <returns>Return instance or default</returns>
 	public static T GetOrFindInterface<T>(Action<T> callback = null) where T : class
 	{
-		TryGetOrFindInterface(out T instance, callback);
+		TryGetOrFindInterface(out var instance, callback);
 
 		return instance;
 	}
@@ -345,14 +359,16 @@ public static class SL
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
 	public static bool TryGetOrFindComponent<T>(out T instance, Action<T> callback = null) where T : MonoBehaviour
 	{
-		if (_TryGet(out instance) || _TryFindComponent(out instance))
+		var type = typeof(T);
+
+		if (_TryGet(type, out instance) || _TryFindComponent(type, out instance))
 		{
 			callback?.Invoke(instance);
 			return true;
 		}
 		else
 		{
-			_AddCallback(callback);
+			_AddCallback(type, callback);
 
 			return false;
 		}
@@ -367,7 +383,7 @@ public static class SL
 	/// <returns>Return true if the instance parameter is set with a none default value</returns>
 	public static bool TryGetOrFindInterface<T>(out T instance, Action<T> callback = null) where T : class
 	{
-		Type type = typeof(T);
+		var type = typeof(T);
 
 		if (!type.IsInterface)
 		{
@@ -377,14 +393,14 @@ public static class SL
 			return false;
 		}
 
-		if (_TryGet(out instance) || _TryFindInterface(out instance))
+		if (_TryGet(type, out instance) || _TryFindInterface(type, out instance))
 		{
 			callback?.Invoke(instance);
 			return true;
 		}
 		else
 		{
-			_AddCallback(callback);
+			_AddCallback(type, callback);
 
 			return false;
 		}
@@ -394,26 +410,26 @@ public static class SL
 
 	#region Find
 
-	private static bool _TryFindComponent<T>(out T instance) where T : MonoBehaviour
+	private static bool _TryFindComponent<T>(Type type, out T instance) where T : MonoBehaviour
 	{
 		instance = Object.FindObjectOfType<T>();
 
 		if (instance != null)
 		{
-			_Add(instance);
+			_Add(type, instance);
 			return true;
 		}
 
 		return false;
 	}
 
-	private static bool _TryFindInterface<T>(out T instance) where T : class
+	private static bool _TryFindInterface<T>(Type type, out T instance) where T : class
 	{
 		instance = Object.FindObjectsOfType<MonoBehaviour>().OfType<T>().FirstOrDefault();
 
 		if (instance != null)
 		{
-			_Add(instance);
+			_Add(type, instance);
 			return true;
 		}
 
@@ -454,16 +470,14 @@ public static class SL
 
 	#region Callback
 
-	private static void _AddCallback<T>(Action<T> callback) where T : class
+	private static void _AddCallback<T>(Type type, Action<T> callback) where T : class
 	{
 		if (callback == null)
 		{
 			return;
 		}
 
-		Type type = typeof(T);
-
-		if (_callbackDict.TryGetValue(type, out Callback newCallback))
+		if (_callbackDict.TryGetValue(type, out var newCallback))
 		{
 #if UNITY_EDITOR
 			DebugLog("_AddCallback: add", type, type);
@@ -484,13 +498,11 @@ public static class SL
 		}
 	}
 
-	private static void _InvokeCallbacks<T>(T instance) where T : class
+	private static void _InvokeCallbacks<T>(Type type, T instance) where T : class
 	{
-		Type type = instance.GetType();
-
 		var typeList = new List<Type>();
 
-		foreach (KeyValuePair<Type, Callback> pair in _callbackDict)
+		foreach (var pair in _callbackDict)
 		{
 			//Test is key Is Assignable From T
 			if (pair.Key.IsAssignableFrom(type))
@@ -499,13 +511,13 @@ public static class SL
 			}
 		}
 
-		foreach (Type key in typeList)
+		foreach (var key in typeList)
 		{
 #if UNITY_EDITOR
 			DebugLog("_InvokeCallbacks:", key, type);
 #endif
 
-			Callback callback = _callbackDict[key];
+			var callback = _callbackDict[key];
 
 			callback.Invoke(instance);
 
@@ -515,9 +527,9 @@ public static class SL
 
 	public static void UnsubscribeCallback<T>(Action<T> callback) where T : class
 	{
-		Type type = typeof(T);
+		var type = typeof(T);
 
-		if (_callbackDict.TryGetValue(type, out Callback newCallback))
+		if (_callbackDict.TryGetValue(type, out var newCallback))
 		{
 #if UNITY_EDITOR
 			DebugLog("RemoveCallback:", type, type);
@@ -539,13 +551,13 @@ public static class SL
 
 		public void Create<T>(Action<T> callback) where T : class
 		{
-			Type type = typeof(T);
+			var type = typeof(T);
 
 			_action = (instance) =>
 			{
 				var actions = (Action<T>)_delegate;
 
-				actions((T)instance);
+				actions?.Invoke((T)instance);
 
 				_action = null;
 			};
@@ -592,8 +604,8 @@ public static class SL
 			return;
 		}
 
-		Type targetType = typeof(T);
-		Type instanceType = instance.GetType();
+		var targetType = typeof(T);
+		var instanceType = instance.GetType();
 
 		DebugLog(text, targetType, instanceType);
 	}
