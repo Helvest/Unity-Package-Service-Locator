@@ -35,7 +35,7 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool Add<T>(T instance) where T : MonoBehaviour
 	{
-		var type = typeof(T);
+		var type = instance.GetType();
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
@@ -72,7 +72,7 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool AddOrReplace<T>(T instance) where T : MonoBehaviour
 	{
-		var type = typeof(T);
+		var type = instance.GetType();
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
@@ -105,7 +105,7 @@ public static class SL
 	/// <returns>False if a other instance of same type is already in the dictionary</returns>
 	public static bool AddOrDestroy<T>(T instance) where T : MonoBehaviour
 	{
-		var type = typeof(T);
+		var type = instance.GetType();
 
 		if (!_singletonsDict.ContainsKey(type))
 		{
@@ -513,6 +513,14 @@ public static class SL
 
 		foreach (var key in typeList)
 		{
+			if (key != type)
+			{
+#if UNITY_EDITOR
+				DebugLog("Add: add", key, type);
+#endif
+				_singletonsDict.Add(key, instance);
+			}
+
 #if UNITY_EDITOR
 			DebugLog("_InvokeCallbacks:", key, type);
 #endif
