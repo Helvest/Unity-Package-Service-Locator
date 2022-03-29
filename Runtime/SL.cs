@@ -312,6 +312,24 @@ public static class SL
 	}
 
 	/// <summary>
+	/// If null, get component instance of type T from the singleton dictionnary
+	/// </summary>
+	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
+	/// <param name="instance">MonoBehaviour instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
+	/// <returns>Return true if the instance parameter is set with a none default value</returns>
+	public static bool TryGetIfNull<T>(ref T instance, Action<T> callback = null) where T : class
+	{
+		if (instance == null)
+		{
+			return TryGet(out instance, callback);
+		}
+
+		callback?.Invoke(instance);
+		return true;
+	}
+
+	/// <summary>
 	/// Get a instance of type T from the singleton dictionnary
 	/// </summary>
 	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
@@ -319,10 +337,14 @@ public static class SL
 	/// <returns>Return instance or default</returns>
 	public static T Get<T>(Action<T> callback = null) where T : class
 	{
-		TryGet(out var instance, callback);
+		_ = TryGet(out var instance, callback);
 
 		return instance;
 	}
+
+	#endregion Get
+
+	#region GetOrFindComponent
 
 	/// <summary>
 	/// Get a component instance of type T in the singleton dictionnary or find it first instance in the scene
@@ -332,20 +354,7 @@ public static class SL
 	/// <returns>Return instance or default</returns>
 	public static T GetOrFindComponent<T>(Action<T> callback = null) where T : MonoBehaviour
 	{
-		TryGetOrFindComponent(out var instance, callback);
-
-		return instance;
-	}
-
-	/// <summary>
-	/// Get a component instance of interface type T in the singleton dictionnary or find it first instance in the scene
-	/// </summary>
-	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
-	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
-	/// <returns>Return instance or default</returns>
-	public static T GetOrFindInterface<T>(Action<T> callback = null) where T : class
-	{
-		TryGetOrFindInterface(out var instance, callback);
+		_ = TryGetOrFindComponent(out var instance, callback);
 
 		return instance;
 	}
@@ -372,6 +381,41 @@ public static class SL
 
 			return false;
 		}
+	}
+
+	/// <summary>
+	/// If null, get a component instance of type T in the singleton dictionnary or find it first instance in the scene
+	/// </summary>
+	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
+	/// <param name="instance">MonoBehaviour instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
+	/// <returns>Return true if the instance parameter is set with a none default value</returns>
+	public static bool TryGetOrFindComponentIfNull<T>(ref T instance, Action<T> callback = null) where T : MonoBehaviour
+	{
+		if (instance == null)
+		{
+			return TryGetOrFindComponent(out instance, callback);
+		}
+
+		callback?.Invoke(instance);
+		return true;
+	}
+
+	#endregion GetOrFindComponent
+
+	#region GetOrFindInterface
+
+	/// <summary>
+	/// Get a component instance of interface type T in the singleton dictionnary or find it first instance in the scene
+	/// </summary>
+	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
+	/// <returns>Return instance or default</returns>
+	public static T GetOrFindInterface<T>(Action<T> callback = null) where T : class
+	{
+		_ = TryGetOrFindInterface(out var instance, callback);
+
+		return instance;
 	}
 
 	/// <summary>
@@ -406,7 +450,25 @@ public static class SL
 		}
 	}
 
-	#endregion Get
+	/// <summary>
+	/// If null, get a component instance of interface type T in the singleton dictionnary or find it first instance in the scene
+	/// </summary>
+	/// <typeparam name="T">MonoBehaviour class or interface</typeparam>
+	/// <param name="instance">MonoBehaviour instance</param>
+	/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
+	/// <returns>Return true if the instance parameter is set with a none default value</returns>
+	public static bool TryGetOrFindInterfaceIfNull<T>(ref T instance, Action<T> callback = null) where T : class
+	{
+		if (instance == null)
+		{
+			return TryGetOrFindInterface(out instance, callback);
+		}
+
+		callback?.Invoke(instance);
+		return true;
+	}
+
+	#endregion GetOrFindInterface
 
 	#region Find
 
@@ -559,8 +621,6 @@ public static class SL
 
 		public void Create<T>(Action<T> callback) where T : class
 		{
-			var type = typeof(T);
-
 			_action = (instance) =>
 			{
 				var actions = (Action<T>)_delegate;
