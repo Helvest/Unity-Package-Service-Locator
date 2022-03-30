@@ -535,7 +535,7 @@ public class ServiceLocator
 	/// <summary>
 	/// Remove all component instance from the singleton dictionnary
 	/// </summary>
-	public void Reset()
+	public void ResetSL()
 	{
 		singletonsDict.Clear();
 		callbackDict.Clear();

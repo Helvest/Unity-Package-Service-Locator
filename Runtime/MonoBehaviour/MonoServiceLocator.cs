@@ -259,9 +259,9 @@ public class MonoServiceLocator : MonoBehaviour, IHolderSL
 	/// <summary>
 	/// Remove all component instance from the singleton dictionnary
 	/// </summary>
-	public void Reset()
+	public void ResetSL()
 	{
-		sl.Reset();
+		sl.ResetSL();
 	}
 
 	/// <summary>

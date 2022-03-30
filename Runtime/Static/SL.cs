@@ -209,9 +209,9 @@ public static class SL
 	/// <summary>
 	/// Remove all component instance from the singleton dictionnary
 	/// </summary>
-	public static void Reset()
+	public static void ResetSL()
 	{
-		sl.Reset();
+		sl.ResetSL();
 	}
 
 	/// <summary>
