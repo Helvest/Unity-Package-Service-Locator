@@ -1,5 +1,6 @@
 {
     "name": "Helvest.SL",
+    "rootNamespace": "UnitySL",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
