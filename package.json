@@ -1,6 +1,6 @@
 {
   "name": "com.helvest.servicelocator",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "displayName": "Service Locator",
   "description": "Service Locator for Components and Interfaces",
   "keywords": [
