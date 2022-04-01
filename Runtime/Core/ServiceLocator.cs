@@ -32,7 +32,7 @@ public class ServiceLocator
 		}
 	}
 
-	public ServiceLocator(IHolderSL parentSLH)
+	public ServiceLocator(IHoldSL parentSLH)
 	{
 		var parentSL = parentSLH?.sl;
 

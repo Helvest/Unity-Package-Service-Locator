@@ -2,25 +2,55 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[DefaultExecutionOrder(-1)]
-public class MonoServiceLocator : MonoBehaviour, IHolderSL
+[DefaultExecutionOrder(-10000)]
+public class MonoServiceLocator : MonoBehaviour, IHoldSL
 {
+
+	#region Enum
+	public enum UseCaseLocal
+	{
+		UseLocal,
+		UseLocalAndParent,
+		UseParent
+	}
+
+	public enum UseCaseParent
+	{
+		UseParentMSLOrGlobal,
+		UseParentMSLOrParentInHierarchyOrGlobal
+	}
+
+	#endregion
 
 	#region Variables
 
 	[field: SerializeField]
-	public bool UseGlobalSL { get; private set; } = false;
+	public UseCaseLocal ForThisLocator { get; private set; } = UseCaseLocal.UseLocalAndParent;
 
 	[field: SerializeField]
-	public bool UseGlobalSLAsParent { get; private set; } = false;
+	public UseCaseParent ForThisLocatorParent { get; private set; } = UseCaseParent.UseParentMSLOrGlobal;
 
 	[field: SerializeField]
 	public MonoServiceLocator ParentMSL { get; private set; } = default;
 
-	public ServiceLocator sl { get; private set; } = null;
+	private ServiceLocator _sl = null;
+
+	public ServiceLocator sl
+	{
+		get
+		{
+			Initialise();
+			return _sl;
+		}
+	}
+
+	[SerializeField]
+	private bool _useDebugLog = false;
 
 	[SerializeField]
 	private List<MonoBehaviour> _services = new List<MonoBehaviour>();
+
+	private bool _isInitialised = false;
 
 	#endregion Variables
 
@@ -28,11 +58,73 @@ public class MonoServiceLocator : MonoBehaviour, IHolderSL
 
 	private void Awake()
 	{
-		sl = UseGlobalSL ? SL.sl : new ServiceLocator(UseGlobalSLAsParent ? SL.sl : ParentMSL != null ? ParentMSL.sl : null);
+		Initialise();
+	}
+
+	private void Initialise()
+	{
+		if (_isInitialised)
+		{
+			return;
+		}
+
+		_isInitialised = true;
+
+		switch (ForThisLocator)
+		{
+			case UseCaseLocal.UseLocal:
+				_sl = new ServiceLocator();
+				break;
+			case UseCaseLocal.UseLocalAndParent:
+				_sl = new ServiceLocator(GetParent());
+				break;
+			default:
+			case UseCaseLocal.UseParent:
+				_sl = GetParent();
+				break;
+		}
+
+		if (_useDebugLog)
+		{
+			UseDebugLog = _useDebugLog;
+		}
+	}
+
+	private ServiceLocator GetParent()
+	{
+		if (ParentMSL != null)
+		{
+			return ParentMSL.sl;
+		}
+
+		if (ForThisLocatorParent == UseCaseParent.UseParentMSLOrParentInHierarchyOrGlobal)
+		{
+			var cachedParent = transform.parent;
+
+			if (cachedParent != null)
+			{
+				IHoldSL holdSL = cachedParent.GetComponentInParent<IHoldSL>();
+
+				if (holdSL != null)
+				{
+					return holdSL.sl;
+				}
+			}
+		}
+
+		return SL.sl;
 	}
 
 	private void OnValidate()
 	{
+		if (ForThisLocatorParent == UseCaseParent.UseParentMSLOrParentInHierarchyOrGlobal)
+		{
+			if (ParentMSL == null)
+			{
+				ParentMSL = transform.parent?.GetComponentInParent<MonoServiceLocator>();
+			}
+		}
+
 		if (ParentMSL == this)
 		{
 			ParentMSL = null;
@@ -287,10 +379,10 @@ public class MonoServiceLocator : MonoBehaviour, IHolderSL
 
 #if UNITY_EDITOR
 
-	public bool useDebugLog
+	public bool UseDebugLog
 	{
 		get { return sl.useDebugLog; }
-		set { sl.useDebugLog = value; }
+		set { sl.useDebugLog = _useDebugLog = value; }
 	}
 
 #endif

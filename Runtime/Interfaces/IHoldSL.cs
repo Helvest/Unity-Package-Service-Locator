@@ -1,4 +1,4 @@
-﻿public interface IHolderSL
+﻿public interface IHoldSL
 {
 	public ServiceLocator sl { get; }
 }
