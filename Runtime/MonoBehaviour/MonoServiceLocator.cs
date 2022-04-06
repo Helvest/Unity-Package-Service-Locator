@@ -20,22 +20,22 @@ namespace HelvestSL
 
 		public enum UseCaseParent
 		{
-			UseParentMSLOrGlobal,
-			UseParentMSLOrParentInHierarchyOrGlobal
+			UseVarOrGlobal,
+			UseVarOrFindInHierarchyOrGlobal
 		}
 
 		#endregion
 
 		#region Variables
 
-		[field: SerializeField]
+		[field: SerializeField, Header("MonoServiceLocator")]
 		public UseCaseLocal ForThisLocator { get; private set; } = UseCaseLocal.UseLocalAndParent;
 
 		[field: SerializeField]
-		public UseCaseParent ForThisLocatorParent { get; private set; } = UseCaseParent.UseParentMSLOrGlobal;
+		public UseCaseParent ForThisParent { get; private set; } = UseCaseParent.UseVarOrGlobal;
 
 		[field: SerializeField]
-		public MonoServiceLocator ParentMSL { get; private set; } = default;
+		public MonoServiceLocator Parent { get; private set; } = default;
 
 		private ServiceLocator _sl = null;
 
@@ -49,15 +49,19 @@ namespace HelvestSL
 		}
 
 		[SerializeField]
-		private Transform _instanceParent = default;
+		private List<MonoBehaviour> _services = new List<MonoBehaviour>();
+
+		[Header("Prefabs")]
+
+		[SerializeField]
+		private Transform _transformParentForPrefabs = default;
 
 		[SerializeField]
 		private List<MonoBehaviour> _servicesPrefab = new List<MonoBehaviour>();
 
 		private readonly List<MonoBehaviour> _servicesInstanciate = new List<MonoBehaviour>();
 
-		[SerializeField]
-		private List<MonoBehaviour> _services = new List<MonoBehaviour>();
+
 
 		private bool _isInitialised = false;
 
@@ -67,11 +71,6 @@ namespace HelvestSL
 
 		private void Awake()
 		{
-			if (_instanceParent == null)
-			{
-				TryGetComponent(out _instanceParent);
-			}
-
 			Initialise();
 		}
 
@@ -106,12 +105,12 @@ namespace HelvestSL
 
 		private ServiceLocator GetParent()
 		{
-			if (ParentMSL != null)
+			if (Parent != null)
 			{
-				return ParentMSL.sl;
+				return Parent.sl;
 			}
 
-			if (ForThisLocatorParent == UseCaseParent.UseParentMSLOrParentInHierarchyOrGlobal)
+			if (ForThisParent == UseCaseParent.UseVarOrFindInHierarchyOrGlobal)
 			{
 				var cachedParent = transform.parent;
 
@@ -143,7 +142,7 @@ namespace HelvestSL
 			{
 				if (service != null && !ContainsKey(service))
 				{
-					var go = Instantiate(service, _instanceParent);
+					var go = Instantiate(service, _transformParentForPrefabs);
 					Add(go);
 					_servicesInstanciate.Add(go);
 				}
@@ -434,17 +433,17 @@ namespace HelvestSL
 
 		private void OnValidate()
 		{
-			if (ForThisLocatorParent == UseCaseParent.UseParentMSLOrParentInHierarchyOrGlobal)
+			if (ForThisParent == UseCaseParent.UseVarOrFindInHierarchyOrGlobal)
 			{
-				if (ParentMSL == null)
+				if (Parent == null)
 				{
-					ParentMSL = transform.parent?.GetComponentInParent<MonoServiceLocator>();
+					Parent = transform.parent?.GetComponentInParent<MonoServiceLocator>();
 				}
 			}
 
-			if (ParentMSL == this)
+			if (Parent == this)
 			{
-				ParentMSL = null;
+				Parent = null;
 			}
 		}
 
