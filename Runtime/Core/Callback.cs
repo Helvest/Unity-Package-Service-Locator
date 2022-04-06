@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UnitySL
+namespace HelvestSL
 {
 	/// <summary>
 	/// Class to save and call Action by type send 
