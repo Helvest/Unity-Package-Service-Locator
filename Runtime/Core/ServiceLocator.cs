@@ -55,7 +55,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!singletonsDict.ContainsKey(type))
+			if (!ContainsKey(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("Add: add", instance);
@@ -66,9 +66,11 @@ namespace HelvestSL
 			}
 			else
 			{
+				bool containValue = ContainsValue(instance);
+
 #if UNITY_EDITOR
 
-				if (singletonsDict.ContainsValue(instance))
+				if (containValue)
 				{
 					DebugLog("Add: don't add, same instance already in", instance);
 				}
@@ -78,7 +80,7 @@ namespace HelvestSL
 				}
 #endif
 
-				return singletonsDict.ContainsValue(instance);
+				return containValue;
 			}
 		}
 
@@ -125,7 +127,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!singletonsDict.ContainsKey(type))
+			if (!ContainsKey(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrDestroy: add", instance);
@@ -134,7 +136,7 @@ namespace HelvestSL
 
 				return true;
 			}
-			else if (singletonsDict.ContainsValue(instance))
+			else if (ContainsValue(instance))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrDestroy: already in, don't destroy", instance);
@@ -149,6 +151,72 @@ namespace HelvestSL
 #endif
 
 				Object.Destroy(instance.gameObject);
+
+				return false;
+			}
+		}
+
+		public bool AddOrDisable<T>(T instance) where T : MonoBehaviour
+		{
+			var type = instance.GetType();
+
+			if (!ContainsKey(type))
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrDisable: add", instance);
+#endif
+				_Add(type, instance);
+
+				return true;
+			}
+			else if (ContainsValue(instance))
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrDisable: already in, don't disable", instance);
+#endif
+
+				return true;
+			}
+			else
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrDisable: disable", instance);
+#endif
+
+				instance.enabled = false;
+
+				return false;
+			}
+		}
+
+		public bool AddOrSetActiveFalse<T>(T instance) where T : MonoBehaviour
+		{
+			var type = instance.GetType();
+
+			if (!ContainsKey(type))
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrSetActiveFalse: add", instance);
+#endif
+				_Add(type, instance);
+
+				return true;
+			}
+			else if (ContainsValue(instance))
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrSetActiveFalse: already in, don't disable", instance);
+#endif
+
+				return true;
+			}
+			else
+			{
+#if UNITY_EDITOR
+				DebugLog("AddOrSetActiveFalse: disable", instance);
+#endif
+
+				instance.gameObject.SetActive(false);
 
 				return false;
 			}
