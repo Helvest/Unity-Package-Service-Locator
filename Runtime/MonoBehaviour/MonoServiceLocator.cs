@@ -92,10 +92,12 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 				break;
 		}
 
+#if UNITY_EDITOR
 		if (_useDebugLog)
 		{
 			UseDebugLog = _useDebugLog;
 		}
+#endif
 	}
 
 	private ServiceLocator GetParent()
