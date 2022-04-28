@@ -36,6 +36,8 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	private ServiceLocator _sl = null;
 
+	public AddMod addMod = AddMod.AddOrSetActiveFalse;
+
 	public ServiceLocator SL
 	{
 		get
@@ -47,6 +49,8 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	[SerializeField]
 	private List<MonoBehaviour> _services = new List<MonoBehaviour>();
+
+	private readonly List<MonoBehaviour> _servicesAdded = new List<MonoBehaviour>();
 
 	[Header("Prefabs")]
 
@@ -131,30 +135,33 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		{
 			if (service != null)
 			{
-				SL.Add(service);
+				SL.Add(service, addMod);
+				_servicesAdded.Add(service);
 			}
 		}
 
-		foreach (var service in _servicesPrefab)
+		foreach (var prefab in _servicesPrefab)
 		{
-			if (service != null && !SL.ContainsKey(service))
+			if (prefab != null && !SL.ContainsKey(prefab))
 			{
-				var go = Instantiate(service, _transformParentForPrefabs);
-				SL.Add(go);
-				_servicesInstanciate.Add(go);
+				var service = Instantiate(prefab, _transformParentForPrefabs);
+				SL.Add(service);
+				_servicesInstanciate.Add(service);
 			}
 		}
 	}
 
 	private void OnDisable()
 	{
-		foreach (var service in _services)
+		foreach (var service in _servicesAdded)
 		{
 			if (service != null)
 			{
 				SL.Remove(service);
 			}
 		}
+
+		_servicesAdded.Clear();
 
 		foreach (var service in _servicesInstanciate)
 		{

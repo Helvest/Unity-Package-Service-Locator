@@ -6,6 +6,15 @@ using Object = UnityEngine.Object;
 namespace HelvestSL
 {
 
+	public enum AddMod
+	{
+		AddOrNot,
+		AddOrReplace,
+		AddOrDestroy,
+		AddOrDisable,
+		AddOrSetActiveFalse
+	}
+
 	/// <summary>
 	/// Service Locator Class
 	/// </summary>
@@ -43,6 +52,24 @@ namespace HelvestSL
 			singletonsDict.Add(type, instance);
 
 			_InvokeCallbacks(type, instance);
+		}
+
+		public bool Add<T>(T instance, AddMod addMod) where T : MonoBehaviour
+		{
+			switch (addMod)
+			{
+				default:
+				case AddMod.AddOrNot:
+					return Add(instance);
+				case AddMod.AddOrReplace:
+					return AddOrReplace(instance);
+				case AddMod.AddOrDestroy:
+					return AddOrDestroy(instance);
+				case AddMod.AddOrDisable:
+					return AddOrDisable(instance);
+				case AddMod.AddOrSetActiveFalse:
+					return AddOrSetActiveFalse(instance);
+			}
 		}
 
 		/// <summary>
