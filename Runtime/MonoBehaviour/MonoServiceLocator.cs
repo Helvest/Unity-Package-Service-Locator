@@ -23,7 +23,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	#endregion
 
-	#region Variables
+	#region Fields
 
 	[field: SerializeField, Header("MonoServiceLocator")]
 	public UseCaseLocal ForThisLocator { get; private set; } = UseCaseLocal.UseLocalAndParent;

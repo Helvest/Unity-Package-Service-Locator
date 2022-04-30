@@ -21,7 +21,7 @@ namespace HelvestSL
 	public class ServiceLocator
 	{
 
-		#region Variables
+		#region Fields
 
 		public ServiceLocator parentSL = null;
 
