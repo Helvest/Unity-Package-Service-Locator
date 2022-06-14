@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 namespace HelvestSL
 {
 
-	public enum AddMod
+	public enum AddMode
 	{
 		AddOrNot,
 		AddOrReplace,
@@ -25,7 +25,7 @@ namespace HelvestSL
 
 		public ServiceLocator parentSL = null;
 
-		public readonly Dictionary<Type, object> singletonsDict = new Dictionary<Type, object>();
+		public readonly Dictionary<Type, object> serviceDict = new Dictionary<Type, object>();
 
 		public readonly Dictionary<Type, Callback> callbackDict = new Dictionary<Type, Callback>();
 
@@ -49,31 +49,38 @@ namespace HelvestSL
 
 		private void _Add<T>(Type type, T instance) where T : class
 		{
-			singletonsDict.Add(type, instance);
+			serviceDict.Add(type, instance);
 
 			_InvokeCallbacks(type, instance);
 		}
 
-		public bool Add<T>(T instance, AddMod addMod) where T : MonoBehaviour
+		/// <summary>
+		/// Add the component instance to the service dictionary
+		/// </summary>
+		/// <typeparam name="T">Type of your class</typeparam>
+		/// <param name="instance">Instance of your class</param>
+		/// <param name="addMode">Mode of how you want to add your service</param>
+		/// <returns>False if a other instance of same type is already in the dictionary</returns>
+		public bool Add<T>(T instance, AddMode addMode) where T : MonoBehaviour
 		{
-			switch (addMod)
+			switch (addMode)
 			{
 				default:
-				case AddMod.AddOrNot:
+				case AddMode.AddOrNot:
 					return Add(instance);
-				case AddMod.AddOrReplace:
+				case AddMode.AddOrReplace:
 					return AddOrReplace(instance);
-				case AddMod.AddOrDestroy:
+				case AddMode.AddOrDestroy:
 					return AddOrDestroy(instance);
-				case AddMod.AddOrDisable:
+				case AddMode.AddOrDisable:
 					return AddOrDisable(instance);
-				case AddMod.AddOrSetActiveFalse:
+				case AddMode.AddOrSetActiveFalse:
 					return AddOrSetActiveFalse(instance);
 			}
 		}
 
 		/// <summary>
-		/// Add the component instance to the singleton dictionary
+		/// Add the component instance to the service dictionary
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
@@ -82,7 +89,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!ContainsKey(type))
+			if (!ContainsType(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("Add: add", instance);
@@ -112,7 +119,7 @@ namespace HelvestSL
 		}
 
 		/// <summary>
-		/// Add or replace the component instance to the singleton dictionary
+		/// Add or replace the component instance to the local service dictionary
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
@@ -121,7 +128,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!singletonsDict.ContainsKey(type))
+			if (!serviceDict.ContainsKey(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrReplace: add", instance);
@@ -138,14 +145,14 @@ namespace HelvestSL
 #endif
 				Remove<T>();
 
-				singletonsDict[type] = instance;
+				serviceDict[type] = instance;
 
 				return false;
 			}
 		}
 
 		/// <summary>
-		/// Add the component instance to the singleton dictionary or destroy is GameObject
+		/// Add the component instance to the service dictionary or destroy is GameObject
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
@@ -154,7 +161,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!ContainsKey(type))
+			if (!ContainsType(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrDestroy: add", instance);
@@ -187,7 +194,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!ContainsKey(type))
+			if (!ContainsType(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrDisable: add", instance);
@@ -220,7 +227,7 @@ namespace HelvestSL
 		{
 			var type = instance.GetType();
 
-			if (!ContainsKey(type))
+			if (!ContainsType(type))
 			{
 #if UNITY_EDITOR
 				DebugLog("AddOrSetActiveFalse: add", instance);
@@ -254,16 +261,24 @@ namespace HelvestSL
 		#region Remove
 
 		/// <summary>
-		/// Remove all the component's instances of type T from the singleton dictionary
+		/// Remove all the component's instances of type T from the service dictionary
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
 		/// <returns>Return true if the type was in the dictionary</returns>
 		public bool Remove<T>() where T : class
 		{
-			var type = typeof(T);
+			return Remove(typeof(T));
+		}
 
-			if (!singletonsDict.TryGetValue(type, out object instance))
+		/// <summary>
+		/// Remove all the component's instances of this type from the service dictionary
+		/// </summary>
+		/// <param name="type">Type to remove</param>
+		/// <returns>Return true if the type was in the dictionary</returns>
+		public bool Remove(Type type)
+		{
+			if (!serviceDict.TryGetValue(type, out object instance))
 			{
 				return false;
 			}
@@ -272,23 +287,17 @@ namespace HelvestSL
 			DebugLog("Remove: ", type);
 #endif
 
-			singletonsDict.Remove(type);
+			serviceDict.Remove(type);
 
 			var typeToRemove = new List<Type>();
 
-			foreach (var pair in singletonsDict)
+			foreach (var pair in serviceDict)
 			{
-				//Remove only instance copy
+				//Remove only same instance
 				if (pair.Value == instance)
 				{
 					typeToRemove.Add(pair.Key);
 				}
-
-				//Test is key Is Assignable From T
-				/*if (pair.Key.IsAssignableFrom(type) || type.IsAssignableFrom(pair.Key))
-				{
-					typeToRemove.Add(pair.Key);
-				}*/
 			}
 
 			foreach (var key in typeToRemove)
@@ -297,28 +306,28 @@ namespace HelvestSL
 				DebugLog("Remove: ", key, type);
 #endif
 
-				singletonsDict.Remove(key);
+				serviceDict.Remove(key);
 			}
 
 			return true;
 		}
 
 		/// <summary>
-		/// Remove all the component's instances of type T from the singleton dictionary
+		/// Remove all the component's instances of type T from the service dictionary
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
 		/// <returns>Return true if the instance was in the dictionary</returns>
 		public bool Remove<T>(T instance) where T : MonoBehaviour
 		{
-			if (!singletonsDict.ContainsValue(instance))
+			if (!serviceDict.ContainsValue(instance))
 			{
 				return false;
 			}
 
 			var typeToRemove = new List<Type>();
 
-			foreach (var pair in singletonsDict)
+			foreach (var pair in serviceDict)
 			{
 				if (pair.Value == instance)
 				{
@@ -345,14 +354,14 @@ namespace HelvestSL
 				DebugLog("Remove: ", key, type);
 #endif
 
-				singletonsDict.Remove(key);
+				serviceDict.Remove(key);
 			}
 
 			return true;
 		}
 
 		/// <summary>
-		/// Remove the component instance from the singleton dictionary and destroy is GameObject
+		/// Remove the component instance from the service dictionary and destroy is GameObject
 		/// </summary>
 		/// <typeparam name="T">Type of your class</typeparam>
 		/// <param name="instance">Instance of your class</param>
@@ -369,37 +378,37 @@ namespace HelvestSL
 
 		public bool ContainsKey<T>(T instance, bool searchParent = true) where T : class
 		{
-			return ContainsKey<T>(instance.GetType(), searchParent);
+			return ContainsType(instance.GetType(), searchParent);
 		}
 
 		public bool ContainsKey<T>(bool searchParent = true) where T : class
 		{
-			return ContainsKey<T>(typeof(T), searchParent);
+			return ContainsType(typeof(T), searchParent);
 		}
 
-		public bool ContainsKey<T>(Type type, bool searchParent = true) where T : class
+		public bool ContainsType(Type type, bool searchParent = true)
 		{
 			//Search: Quick
-			if (singletonsDict.ContainsKey(type))
+			if (serviceDict.ContainsKey(type))
 			{
 				return true;
 			}
 
 			//Deeper search: Slow
-			foreach (var pair in singletonsDict)
+			foreach (var pair in serviceDict)
 			{
 				//Test is key Is Assignable From T
 				if (type.IsAssignableFrom(pair.Key))
 				{
 					//Save type for quick search
-					singletonsDict.Add(type, (T)pair.Value);
+					serviceDict.Add(type, pair.Value);
 					return true;
 				}
 			}
 
 			if (searchParent && parentSL != null)
 			{
-				return parentSL.ContainsKey<T>(type, true);
+				return parentSL.ContainsType(type, true);
 			}
 
 			return false;
@@ -408,7 +417,7 @@ namespace HelvestSL
 		public bool ContainsValue<T>(T instance, bool searchParent = true) where T : class
 		{
 			//Search: Quick
-			if (singletonsDict.ContainsValue(instance))
+			if (serviceDict.ContainsValue(instance))
 			{
 				return true;
 			}
@@ -428,14 +437,14 @@ namespace HelvestSL
 		private protected bool _TryGet<T>(Type type, out T instance) where T : class
 		{
 			//Search: Quick
-			if (singletonsDict.TryGetValue(type, out object singleton))
+			if (serviceDict.TryGetValue(type, out object singleton))
 			{
 				instance = (T)singleton;
 				return true;
 			}
 
 			//Deeper search: Slow
-			foreach (var pair in singletonsDict)
+			foreach (var pair in serviceDict)
 			{
 				//Test is key Is Assignable From T
 				if (type.IsAssignableFrom(pair.Key))
@@ -443,7 +452,7 @@ namespace HelvestSL
 					instance = (T)pair.Value;
 
 					//Save type for quick search
-					singletonsDict.Add(type, instance);
+					serviceDict.Add(type, instance);
 					return true;
 				}
 			}
@@ -682,7 +691,7 @@ namespace HelvestSL
 		/// </summary>
 		public void ResetSL()
 		{
-			singletonsDict.Clear();
+			serviceDict.Clear();
 			callbackDict.Clear();
 		}
 
@@ -691,7 +700,7 @@ namespace HelvestSL
 		/// </summary>
 		public void ResetAndDestroy()
 		{
-			foreach (object item in singletonsDict.Values)
+			foreach (object item in serviceDict.Values)
 			{
 				if (item is MonoBehaviour component && component)
 				{
@@ -699,7 +708,7 @@ namespace HelvestSL
 				}
 			}
 
-			singletonsDict.Clear();
+			serviceDict.Clear();
 			callbackDict.Clear();
 		}
 
@@ -755,7 +764,7 @@ namespace HelvestSL
 #if UNITY_EDITOR
 					DebugLog("Add: add", key, type);
 #endif
-					singletonsDict.Add(key, instance);
+					serviceDict.Add(key, instance);
 				}
 
 #if UNITY_EDITOR

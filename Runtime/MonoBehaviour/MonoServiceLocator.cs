@@ -36,7 +36,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	private ServiceLocator _sl = null;
 
-	public AddMod addMod = AddMod.AddOrSetActiveFalse;
+	public AddMode addMod = AddMode.AddOrSetActiveFalse;
 
 	public ServiceLocator SL
 	{

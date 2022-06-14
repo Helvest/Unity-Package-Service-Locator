@@ -55,6 +55,16 @@ public static class HoldSLExtension
 	}
 
 	/// <summary>
+	/// Remove all the component's instances of this type from the service dictionary
+	/// </summary>
+	/// <param name="type">Type to remove</param>
+	/// <returns>Return true if the type was in the dictionary</returns>
+	public static bool Remove(this IHoldSL hold, Type type)
+	{
+		return hold.SL.Remove(type);
+	}
+
+	/// <summary>
 	/// Remove all the component's instances of type T from the singleton dictionary
 	/// </summary>
 	/// <typeparam name="T">Type of your class</typeparam>
@@ -90,9 +100,9 @@ public static class HoldSLExtension
 		return hold.SL.ContainsKey<T>(searchParent);
 	}
 
-	public static bool ContainsKey<T>(this IHoldSL hold, Type type, bool searchParent = true) where T : class
+	public static bool ContainsType(this IHoldSL hold, Type type, bool searchParent = true)
 	{
-		return hold.SL.ContainsKey<T>(type, searchParent);
+		return hold.SL.ContainsType(type, searchParent);
 	}
 
 	public static bool ContainsValue<T>(this IHoldSL hold, T instance, bool searchParent = true) where T : class
