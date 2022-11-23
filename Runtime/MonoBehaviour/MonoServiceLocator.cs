@@ -36,8 +36,6 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	private ServiceLocator _sl = null;
 
-	public AddMode addMod = AddMode.AddOrSetActiveFalse;
-
 	public ServiceLocator SL
 	{
 		get
@@ -135,14 +133,16 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		{
 			if (service != null)
 			{
-				SL.Add(service, addMod);
-				_servicesAdded.Add(service);
+				if (SL.Add(service, AddMode.AddOrSetActiveFalse))
+				{
+					_servicesAdded.Add(service);
+				}
 			}
 		}
 
 		foreach (var prefab in _servicesPrefab)
 		{
-			if (prefab != null && !SL.ContainsKey(prefab))
+			if (prefab != null && !SL.ContainsKey(prefab, true))
 			{
 				var service = Instantiate(prefab, _transformParentForPrefabs);
 				SL.Add(service);
@@ -158,6 +158,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 			if (service != null)
 			{
 				SL.Remove(service);
+				service.gameObject.SetActive(false);
 			}
 		}
 
@@ -204,6 +205,14 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		if (Parent == this)
 		{
 			Parent = null;
+		}
+
+		foreach (var service in _services)
+		{
+			if (service != null)
+			{
+				service.gameObject.SetActive(false);
+			}
 		}
 	}
 

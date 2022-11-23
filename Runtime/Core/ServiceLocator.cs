@@ -47,10 +47,10 @@ namespace HelvestSL
 
 		#region Add
 
-		private void _Add<T>(Type type, T instance) where T : class
+		private void _Add<T>(Type type, T instance) where T : MonoBehaviour
 		{
 			serviceDict.Add(type, instance);
-
+			instance.gameObject.SetActive(true);
 			_InvokeCallbacks(type, instance);
 		}
 
@@ -605,7 +605,7 @@ namespace HelvestSL
 		/// <param name="instance">MonoBehaviour instance</param>
 		/// <param name="callback">if the instance of type T is not found, this Action will be call when is added to the singleton dictionnary and then automatically unsubscribe</param>
 		/// <returns>Return true if the instance parameter is set with a none default value</returns>
-		public bool TryGetOrFindInterface<T>(out T instance, Action<T> callback = null) where T : class
+		public bool TryGetOrFindInterface<T>(out T instance, Action<T> callback = null, bool includeInactive = false) where T : class
 		{
 			var type = typeof(T);
 
@@ -617,7 +617,7 @@ namespace HelvestSL
 				return false;
 			}
 
-			if (_TryGet(type, out instance) || _TryFindInterface(type, out instance))
+			if (_TryGet(type, out instance) || _TryFindInterface(type, out instance, includeInactive))
 			{
 				callback?.Invoke(instance);
 				return true;
@@ -664,16 +664,16 @@ namespace HelvestSL
 			return false;
 		}
 
-		private bool _TryFindInterface<T>(Type type, out T instance) where T : class
+		private bool _TryFindInterface<T>(Type type, out T instance, bool includeInactive = false) where T : class
 		{
-			var monos = Object.FindObjectsOfType<MonoBehaviour>();
+			var monos = Object.FindObjectsOfType<MonoBehaviour>(includeInactive);
 
 			foreach (var mono in monos)
 			{
 				if (mono is T findInstance)
 				{
 					instance = findInstance;
-					_Add(type, instance);
+					_Add(type, mono);
 					return true;
 				}
 			}
