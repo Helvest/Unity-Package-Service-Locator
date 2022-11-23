@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using UnityEngine;
 using HelvestSL;
+using UnityEngine;
 
 [DefaultExecutionOrder(-10000)]
 public class MonoServiceLocator : MonoBehaviour, IHoldSL
@@ -68,12 +68,12 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	#region Init
 
-	private void Awake()
+	protected virtual void Awake()
 	{
 		Initialise();
 	}
 
-	private void Initialise()
+	protected virtual void Initialise()
 	{
 		if (_isInitialised)
 		{
@@ -104,7 +104,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 #endif
 	}
 
-	private ServiceLocator GetParent()
+	protected virtual ServiceLocator GetParent()
 	{
 		if (Parent != null)
 		{
@@ -129,7 +129,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		return global::SL.sl;
 	}
 
-	private void OnEnable()
+	protected virtual void OnEnable()
 	{
 		foreach (var service in _services)
 		{
@@ -151,7 +151,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		}
 	}
 
-	private void OnDisable()
+	protected virtual void OnDisable()
 	{
 		foreach (var service in _servicesAdded)
 		{
@@ -191,7 +191,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 		set { SL.useDebugLog = _useDebugLog = value; }
 	}
 
-	private void OnValidate()
+	protected virtual void OnValidate()
 	{
 		if (ForThisParent == UseCaseParent.UseVarOrFindInHierarchyOrGlobal)
 		{
