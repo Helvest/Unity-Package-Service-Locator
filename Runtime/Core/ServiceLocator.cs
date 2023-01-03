@@ -91,7 +91,7 @@ namespace HelvestSL
 
 			if (!ContainsType(type))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("Add: add", instance);
 #endif
 				_Add(type, instance);
@@ -102,7 +102,7 @@ namespace HelvestSL
 			{
 				bool containValue = ContainsValue(instance);
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 				if (containValue)
 				{
@@ -130,7 +130,7 @@ namespace HelvestSL
 
 			if (!serviceDict.ContainsKey(type))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrReplace: add", instance);
 #endif
 
@@ -140,7 +140,7 @@ namespace HelvestSL
 			}
 			else
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrReplace: replace", instance);
 #endif
 				Remove<T>();
@@ -163,7 +163,7 @@ namespace HelvestSL
 
 			if (!ContainsType(type))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDestroy: add", instance);
 #endif
 				_Add(type, instance);
@@ -172,7 +172,7 @@ namespace HelvestSL
 			}
 			else if (ContainsValue(instance))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDestroy: already in, don't destroy", instance);
 #endif
 
@@ -180,7 +180,7 @@ namespace HelvestSL
 			}
 			else
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDestroy: destroy", instance);
 #endif
 
@@ -196,7 +196,7 @@ namespace HelvestSL
 
 			if (!ContainsType(type))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDisable: add", instance);
 #endif
 				_Add(type, instance);
@@ -205,7 +205,7 @@ namespace HelvestSL
 			}
 			else if (ContainsValue(instance))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDisable: already in, don't disable", instance);
 #endif
 
@@ -213,7 +213,7 @@ namespace HelvestSL
 			}
 			else
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrDisable: disable", instance);
 #endif
 
@@ -229,7 +229,7 @@ namespace HelvestSL
 
 			if (!ContainsType(type))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrSetActiveFalse: add", instance);
 #endif
 				_Add(type, instance);
@@ -238,7 +238,7 @@ namespace HelvestSL
 			}
 			else if (ContainsValue(instance))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrSetActiveFalse: already in, don't disable", instance);
 #endif
 
@@ -246,7 +246,7 @@ namespace HelvestSL
 			}
 			else
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("AddOrSetActiveFalse: disable", instance);
 #endif
 
@@ -283,7 +283,7 @@ namespace HelvestSL
 				return false;
 			}
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 			DebugLog("Remove: ", type);
 #endif
 
@@ -302,7 +302,7 @@ namespace HelvestSL
 
 			foreach (var key in typeToRemove)
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("Remove: ", key, type);
 #endif
 
@@ -344,13 +344,13 @@ namespace HelvestSL
 				}*/
 			}
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 			var type = instance.GetType();
 #endif
 
 			foreach (var key in typeToRemove)
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("Remove: ", key, type);
 #endif
 
@@ -479,7 +479,7 @@ namespace HelvestSL
 
 			if (_TryGet(type, out instance))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("TryGet: get", instance);
 #endif
 				callback?.Invoke(instance);
@@ -725,7 +725,7 @@ namespace HelvestSL
 
 			if (callbackDict.TryGetValue(type, out var newCallback))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("_AddCallback: add", type, type);
 #endif
 
@@ -733,7 +733,7 @@ namespace HelvestSL
 			}
 			else
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("_AddCallback: create", type, type);
 #endif
 
@@ -761,13 +761,13 @@ namespace HelvestSL
 			{
 				if (key != type)
 				{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 					DebugLog("Add: add", key, type);
 #endif
 					serviceDict.Add(key, instance);
 				}
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("_InvokeCallbacks:", key, type);
 #endif
 
@@ -785,7 +785,7 @@ namespace HelvestSL
 
 			if (callbackDict.TryGetValue(type, out var newCallback))
 			{
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 				DebugLog("RemoveCallback:", type, type);
 #endif
 
@@ -797,7 +797,7 @@ namespace HelvestSL
 
 		#region DebugLog
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 		public bool useDebugLog = false;
 

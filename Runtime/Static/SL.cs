@@ -236,7 +236,7 @@ public static class SL
 
 	#region DebugLog
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 	public static bool useDebugLog
 	{

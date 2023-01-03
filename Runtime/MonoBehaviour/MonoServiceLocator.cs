@@ -94,7 +94,7 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 				break;
 		}
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 		if (_useDebugLog)
 		{
 			UseDebugLog = _useDebugLog;
@@ -180,11 +180,17 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 
 	#region DebugLog
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 
 	[Header("Debug")]
 	[SerializeField]
 	private bool _useDebugLog = false;
+
+	[SerializeField]
+	private bool _autoSetActiveService = false;
+
+	[SerializeField]
+	private bool _serviceActiveValueToSet = false;
 
 	public bool UseDebugLog
 	{
@@ -207,13 +213,16 @@ public class MonoServiceLocator : MonoBehaviour, IHoldSL
 			Parent = null;
 		}
 
-		foreach (var service in _services)
+		if (_autoSetActiveService)
 		{
-			if (service != null)
+			foreach (var service in _services)
 			{
-				service.gameObject.SetActive(false);
+				if (service != null)
+				{
+					service.gameObject.SetActive(_serviceActiveValueToSet);
+				}
 			}
-		}
+		}	
 	}
 
 #endif
