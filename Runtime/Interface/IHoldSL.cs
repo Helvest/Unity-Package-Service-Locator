@@ -2,5 +2,5 @@
 
 public interface IHoldSL
 {
-	public ServiceLocator SL { get; }
+    public ServiceLocator SL { get; }
 }
